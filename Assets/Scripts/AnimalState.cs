@@ -1,0 +1,1 @@
+public enum AnimalState { Healthy, Wounded }

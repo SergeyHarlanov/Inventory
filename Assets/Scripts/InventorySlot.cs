@@ -9,10 +9,10 @@ public class InventorySlot : MonoBehaviour
 
     public void Setup(InventoryItem item)
     {
-        icon.sprite = item.ItemData.Icon;
+        icon.sprite = item.ItemData.icon;
         countText.text = item.Count.ToString();
 
-        if (item.ItemData.Type == ItemType.Animal)
+        if (item.ItemData.type == ItemType.Animal)
             stateText.text = item.State.ToString();
         else
             stateText.gameObject.SetActive(false);

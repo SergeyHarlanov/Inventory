@@ -10,10 +10,10 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: bf77106a1e47430385174e55bbd371be, type: 3}
-  m_Name: CoinItem
+  m_Name: 0GoldItem
   m_EditorClassIdentifier: 
-  ID: 0
-  Name: 1123
-  Type: 0
-  Icon: {fileID: -201481485, guid: 6136d6974dd1b1b46939096492fd57ea, type: 3}
-  StackLimit: 35
+  id: 0
+  name: "\u0417\u043E\u043B\u043E\u0442\u043E"
+  type: 0
+  icon: {fileID: -201481485, guid: 6136d6974dd1b1b46939096492fd57ea, type: 3}
+  stackLimit: 5
