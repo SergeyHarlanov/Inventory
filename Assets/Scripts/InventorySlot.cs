@@ -15,6 +15,10 @@ public class InventorySlot : MonoBehaviour
         if (item.ItemData.type == ItemType.Animal)
             stateText.text = item.State.ToString();
         else
+        {
+            Debug.Log("DEACTIVATE"+item.ItemData);
             stateText.gameObject.SetActive(false);
+
+        }
     }
 }

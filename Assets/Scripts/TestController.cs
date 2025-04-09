@@ -26,14 +26,14 @@ public class TestController : MonoBehaviour
         inventory.AddRandomItem();
     }
 
-    public void RemoveTestItem()
+    public void RemoveRandomTestItem()
     {
         inventory.RemoveRandomItem();
     }
     
     public void ChangeStateRandomItem()
     {
-        inventory.RemoveRandomItem();
+        inventory.ChangeStateRandomItem();
     }
 
     public void ToggleAnimalState(int itemIndex)

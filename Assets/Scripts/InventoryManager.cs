@@ -1,4 +1,3 @@
-// InventoryManager.cs
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -29,7 +28,6 @@ public class InventoryManager : MonoBehaviour
 
         _inventoryUI.UpdateUI(_items);
     }
-    
 
     public void RemoveItem(Item item, AnimalState state)
     {
@@ -46,32 +44,42 @@ public class InventoryManager : MonoBehaviour
 
     public void ToggleAnimalState(Item item, AnimalState currentState)
     {
-        InventoryItem existingItem = FindMatchingItem(item, currentState);
+        InventoryItem existingItem = _items.Find(i => i.ItemData == item && i.State == currentState);
         
         if (existingItem != null && existingItem.ItemData.type == ItemType.Animal)
         {
-            AnimalState newState = currentState == AnimalState.Healthy ? AnimalState.Wounded : AnimalState.Healthy;
-            RemoveItem(item, currentState);
-            AddItem(item, 1, newState);
+            // Вместо удаления и добавления просто меняем состояние
+            existingItem.State = currentState == AnimalState.Healthy ? AnimalState.Wounded : AnimalState.Healthy;
+            _inventoryUI.UpdateUI(_items);
         }
     }
 
     public void AddRandomItem()
     {
-        int done = Random.Range(0, _items.Count);
-        AddItem(_items[done].ItemData);
+        if (_items.Count > 0)
+        {
+            int index = Random.Range(0, _items.Count);
+            AddItem(_items[index].ItemData, 1, _items[index].State);
+        }
     }
     
     public void RemoveRandomItem()
     {
-        int done = Random.Range(0, _items.Count);
-        RemoveItem(_items[done].ItemData, _items[done].State);
+        if (_items.Count > 0)
+        {
+            int index = Random.Range(0, _items.Count);
+            RemoveItem(_items[index].ItemData, _items[index].State);
+        }
     }
     
     public void ChangeStateRandomItem()
     {
-        int done = Random.Range(0, _items.Count);
-        RemoveItem(_items[done].ItemData, _items[done].State);
+        List<InventoryItem> itemsAnimals = _items.FindAll(x => x.ItemData.type == ItemType.Animal); 
+        if (itemsAnimals.Count > 0)
+        {
+            int index = Random.Range(0, itemsAnimals.Count);
+            ToggleAnimalState(itemsAnimals[index].ItemData, itemsAnimals[index].State);
+        }
     }
 
     private InventoryItem FindMatchingItem(Item item, AnimalState state)

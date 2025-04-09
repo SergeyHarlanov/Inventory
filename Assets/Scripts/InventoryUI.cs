@@ -1,7 +1,6 @@
-// InventoryUI.cs
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
-using System.Collections.Generic;
 
 public class InventoryUI : MonoBehaviour
 {
@@ -10,21 +9,51 @@ public class InventoryUI : MonoBehaviour
     [SerializeField] private ScrollRect scrollRect;
 
     private List<InventorySlot> slots = new List<InventorySlot>();
+    private List<InventorySlot> inactiveSlots = new List<InventorySlot>();
 
     public void UpdateUI(List<InventoryItem> items)
     {
-        // Очищаем существующие слоты
-        foreach (InventorySlot slot in slots)
-            Destroy(slot.gameObject);
-        slots.Clear();
-
-        // Создаем новые слоты
-        foreach (InventoryItem item in items)
+        for (int i = 0; i < items.Count; i++)
         {
-            GameObject slotObj = Instantiate(slotPrefab, slotsContainer);
-            InventorySlot slot = slotObj.GetComponent<InventorySlot>();
-            slot.Setup(item);
-            slots.Add(slot);
+            InventorySlot slot;
+            if (i < slots.Count)
+            {
+                slot = slots[i];
+                if (!slot.gameObject.activeSelf)
+                    slot.gameObject.SetActive(true);
+            }
+            else
+            {
+                slot = GetOrCreateSlot();
+                slots.Add(slot);
+            }
+            
+            slot.Setup(items[i]);
         }
+
+        for (int i = items.Count; i < slots.Count; i++)
+        {
+            slots[i].gameObject.SetActive(false);
+            inactiveSlots.Add(slots[i]);
+        }
+
+        if (items.Count < slots.Count)
+        {
+            slots.RemoveRange(items.Count, slots.Count - items.Count);
+        }
+    }
+
+    private InventorySlot GetOrCreateSlot()
+    {
+        if (inactiveSlots.Count > 0)
+        {
+            InventorySlot slot = inactiveSlots[inactiveSlots.Count - 1];
+            inactiveSlots.RemoveAt(inactiveSlots.Count - 1);
+            slot.gameObject.SetActive(true);
+            return slot;
+        }
+
+        GameObject slotObj = Instantiate(slotPrefab, slotsContainer);
+        return slotObj.GetComponent<InventorySlot>();
     }
 }
