@@ -11,7 +11,6 @@ public class InventoryManager : MonoBehaviour
 
     public void AddItem(Item item, int count = 1, AnimalState state = AnimalState.Healthy)
     {
-        // Ищем существующий слот с таким же item и state
         InventoryItem existingItem = _items.Find(i => i.itemData == item && 
                                                     (i.itemData.type != ItemType.Animal || i.state == state) && 
                                                     i.count < i.itemData.stackLimit);
@@ -24,7 +23,6 @@ public class InventoryManager : MonoBehaviour
             count -= toAdd;
         }
 
-        // Если осталось что добавить и есть свободные слоты
         while (count > 0 && _items.Count < _maxSlots)
         {
             int amountToAdd = Mathf.Min(count, item.stackLimit);
@@ -32,6 +30,7 @@ public class InventoryManager : MonoBehaviour
             count -= amountToAdd;
         }
 
+        ConsolidateSlots(item, state); // Объединяем слоты после добавления
         _inventoryUI.UpdateUI(_items);
     }
 
@@ -44,7 +43,10 @@ public class InventoryManager : MonoBehaviour
         {
             existingItem.count--;
             if (existingItem.count <= 0)
+            {
                 _items.Remove(existingItem);
+            }
+            ConsolidateSlots(item, state); // Объединяем слоты после удаления
         }
     }
 
@@ -55,34 +57,51 @@ public class InventoryManager : MonoBehaviour
         if (existingItem != null && existingItem.itemData.type == ItemType.Animal)
         {
             AnimalState newState = currentState == AnimalState.Healthy ? AnimalState.Wounded : AnimalState.Healthy;
-            InventoryItem targetSlot = _items.Find(i => i.itemData == item && i.state == newState && i.count < i.itemData.stackLimit);
 
             if (existingItem.count > 1)
             {
                 existingItem.count--;
-                if (targetSlot != null)
-                {
-                    targetSlot.count++;
-                }
-                else
-                {
-                    _items.Add(new InventoryItem(item, 1, newState));
-                }
+                AddItem(item, 1, newState);
             }
             else
             {
-                if (targetSlot != null)
-                {
-                    targetSlot.count++;
-                    _items.Remove(existingItem);
-                }
-                else
-                {
-                    existingItem.state = newState;
-                }
+                _items.Remove(existingItem);
+                AddItem(item, 1, newState);
             }
             
+            ConsolidateSlots(item, currentState); // Объединяем слоты для текущего состояния
+            ConsolidateSlots(item, newState);     // Объединяем слоты для нового состояния
             _inventoryUI.UpdateUI(_items);
+        }
+    }
+
+    private void ConsolidateSlots(Item item, AnimalState state)
+    {
+        // Находим все слоты с таким же item и state
+        List<InventoryItem> matchingSlots = _items.FindAll(i => i.itemData == item && 
+                                                              (i.itemData.type != ItemType.Animal || i.state == state));
+        
+        if (matchingSlots.Count > 1)
+        {
+            // Суммируем все предметы в первый слот
+            InventoryItem primarySlot = matchingSlots[0];
+            int totalCount = primarySlot.count;
+            for (int i = 1; i < matchingSlots.Count; i++)
+            {
+                totalCount += matchingSlots[i].count;
+                _items.Remove(matchingSlots[i]);
+            }
+
+            // Распределяем общее количество по слотам с учетом stackLimit
+            primarySlot.count = Mathf.Min(totalCount, item.stackLimit);
+            totalCount -= primarySlot.count;
+
+            while (totalCount > 0 && _items.Count < _maxSlots)
+            {
+                int amountToAdd = Mathf.Min(totalCount, item.stackLimit);
+                _items.Add(new InventoryItem(item, amountToAdd, state));
+                totalCount -= amountToAdd;
+            }
         }
     }
 

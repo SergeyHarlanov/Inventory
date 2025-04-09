@@ -12,7 +12,6 @@ public class InventoryUI : MonoBehaviour
 
     public void UpdateUI(List<InventoryItem> items)
     {
-        // Проходим по списку предметов и обновляем/создаем слоты
         for (int i = 0; i < items.Count; i++)
         {
             InventorySlot slot;
@@ -28,17 +27,15 @@ public class InventoryUI : MonoBehaviour
                 slots.Add(slot);
             }
             
-            slot.Setup(items[i]);
+            slot.Setup(items[i]); // Вызываем Setup с анимацией
         }
 
-        // Деактивируем лишние слоты
         for (int i = items.Count; i < slots.Count; i++)
         {
             slots[i].gameObject.SetActive(false);
             inactiveSlots.Add(slots[i]);
         }
 
-        // Удаляем лишние слоты из активного списка
         if (items.Count < slots.Count)
         {
             slots.RemoveRange(items.Count, slots.Count - items.Count);
@@ -50,6 +47,8 @@ public class InventoryUI : MonoBehaviour
         if (inactiveSlots.Count > 0)
         {
             InventorySlot slot = inactiveSlots[inactiveSlots.Count - 1];
+            slot.ResetData();
+            
             inactiveSlots.RemoveAt(inactiveSlots.Count - 1);
             slot.gameObject.SetActive(true);
             return slot;
