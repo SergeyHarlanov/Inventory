@@ -1,0 +1,1 @@
+public enum ItemType { Resource, Animal, Consumable }

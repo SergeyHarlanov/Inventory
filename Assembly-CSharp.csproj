@@ -43,6 +43,7 @@
   <ItemGroup>
     <Compile Include="Assets\Scripts\TestController.cs" />
     <Compile Include="Assets\Scripts\InventorySlot.cs" />
+    <Compile Include="Assets\Scripts\ItemType.cs" />
     <Compile Include="Assets\Scripts\Item.cs" />
     <Compile Include="Assets\Scripts\InventoryManager.cs" />
     <Compile Include="Assets\Scripts\InventoryItem.cs" />

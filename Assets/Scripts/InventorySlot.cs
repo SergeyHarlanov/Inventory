@@ -12,8 +12,12 @@ public class InventorySlot : MonoBehaviour
         _icon.sprite = item.itemData.icon;
         _countText.text = item.count.ToString();
 
-        if (item.itemData.type == ItemType.Animal)
+        bool isAnimal = item.itemData.type == ItemType.Animal;
+        _stateText.gameObject.SetActive(isAnimal);
+        if (isAnimal)
+        {
             _stateText.text = item.state.ToString();
-        else  _stateText.gameObject.SetActive(false);
+            _stateText.color = item.state == AnimalState.Healthy ? Color.green : Color.red;
+        }
     }
 }

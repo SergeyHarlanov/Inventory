@@ -35,10 +35,4 @@ public class TestController : MonoBehaviour
     {
         _inventory.ChangeStateRandomItem();
     }
-
-    public void ToggleAnimalState(int itemIndex)
-    {
-        if (_testItems[itemIndex].type == ItemType.Animal)
-            _inventory.ToggleAnimalState(_testItems[itemIndex], AnimalState.Healthy);
-    }
 }
