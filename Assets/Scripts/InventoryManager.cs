@@ -5,17 +5,18 @@ public class InventoryManager : MonoBehaviour
 {
     [SerializeField] private int _maxSlots = 20;
     [SerializeField] private InventoryUI _inventoryUI;
-    [SerializeField] private List<InventoryItem> _items = new List<InventoryItem>();
+    
+     private List<InventoryItem> _items = new List<InventoryItem>();
 
     public void AddItem(Item item, int count = 1, AnimalState state = AnimalState.Healthy)
     {
         InventoryItem existingItem = FindMatchingItem(item, state);
         
-        if (existingItem != null && existingItem.Count < item.stackLimit)
+        if (existingItem != null && existingItem.count < item.stackLimit)
         {
-            int remainingSpace = item.stackLimit - existingItem.Count;
+            int remainingSpace = item.stackLimit - existingItem.count;
             int toAdd = Mathf.Min(count, remainingSpace);
-            existingItem.Count += toAdd;
+            existingItem.count += toAdd;
             count -= toAdd;
         }
 
@@ -35,8 +36,8 @@ public class InventoryManager : MonoBehaviour
         
         if (existingItem != null)
         {
-            existingItem.Count--;
-            if (existingItem.Count <= 0)
+            existingItem.count--;
+            if (existingItem.count <= 0)
                 _items.Remove(existingItem);
             _inventoryUI.UpdateUI(_items);
         }
@@ -44,12 +45,12 @@ public class InventoryManager : MonoBehaviour
 
     public void ToggleAnimalState(Item item, AnimalState currentState)
     {
-        InventoryItem existingItem = _items.Find(i => i.ItemData == item && i.State == currentState);
+        InventoryItem existingItem = _items.Find(i => i.itemData == item && i.state == currentState);
         
-        if (existingItem != null && existingItem.ItemData.type == ItemType.Animal)
+        if (existingItem != null && existingItem.itemData.type == ItemType.Animal)
         {
             // Вместо удаления и добавления просто меняем состояние
-            existingItem.State = currentState == AnimalState.Healthy ? AnimalState.Wounded : AnimalState.Healthy;
+            existingItem.state = currentState == AnimalState.Healthy ? AnimalState.Wounded : AnimalState.Healthy;
             _inventoryUI.UpdateUI(_items);
         }
     }
@@ -59,7 +60,7 @@ public class InventoryManager : MonoBehaviour
         if (_items.Count > 0)
         {
             int index = Random.Range(0, _items.Count);
-            AddItem(_items[index].ItemData, 1, _items[index].State);
+            AddItem(_items[index].itemData, 1, _items[index].state);
         }
     }
     
@@ -68,24 +69,24 @@ public class InventoryManager : MonoBehaviour
         if (_items.Count > 0)
         {
             int index = Random.Range(0, _items.Count);
-            RemoveItem(_items[index].ItemData, _items[index].State);
+            RemoveItem(_items[index].itemData, _items[index].state);
         }
     }
     
     public void ChangeStateRandomItem()
     {
-        List<InventoryItem> itemsAnimals = _items.FindAll(x => x.ItemData.type == ItemType.Animal); 
+        List<InventoryItem> itemsAnimals = _items.FindAll(x => x.itemData.type == ItemType.Animal); 
         if (itemsAnimals.Count > 0)
         {
             int index = Random.Range(0, itemsAnimals.Count);
-            ToggleAnimalState(itemsAnimals[index].ItemData, itemsAnimals[index].State);
+            ToggleAnimalState(itemsAnimals[index].itemData, itemsAnimals[index].state);
         }
     }
 
     private InventoryItem FindMatchingItem(Item item, AnimalState state)
     {
-        return _items.Find(i => i.ItemData == item && 
-                            (i.ItemData.type != ItemType.Animal || i.State == state) && 
-                            i.Count < i.ItemData.stackLimit);
+        return _items.Find(i => i.itemData == item && 
+                            (i.itemData.type != ItemType.Animal || i.state == state) && 
+                            i.count < i.itemData.stackLimit);
     }
 }

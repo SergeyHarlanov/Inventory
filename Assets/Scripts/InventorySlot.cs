@@ -3,22 +3,17 @@ using UnityEngine.UI;
 
 public class InventorySlot : MonoBehaviour
 {
-    [SerializeField] private Image icon;
-    [SerializeField] private Text countText;
-    [SerializeField] private Text stateText;
+    [SerializeField] private Image _icon;
+    [SerializeField] private Text _countText;
+    [SerializeField] private Text _stateText;
 
     public void Setup(InventoryItem item)
     {
-        icon.sprite = item.ItemData.icon;
-        countText.text = item.Count.ToString();
+        _icon.sprite = item.itemData.icon;
+        _countText.text = item.count.ToString();
 
-        if (item.ItemData.type == ItemType.Animal)
-            stateText.text = item.State.ToString();
-        else
-        {
-            Debug.Log("DEACTIVATE"+item.ItemData);
-            stateText.gameObject.SetActive(false);
-
-        }
+        if (item.itemData.type == ItemType.Animal)
+            _stateText.text = item.state.ToString();
+        else  _stateText.gameObject.SetActive(false);
     }
 }

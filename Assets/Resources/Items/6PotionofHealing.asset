@@ -16,4 +16,4 @@ MonoBehaviour:
   name: "\u0417\u0435\u043B\u044C\u0435 \u043B\u0435\u0447\u0435\u043D\u0438\u044F"
   type: 2
   icon: {fileID: -2070210511, guid: 6136d6974dd1b1b46939096492fd57ea, type: 3}
-  stackLimit: 5
+  stackLimit: 2

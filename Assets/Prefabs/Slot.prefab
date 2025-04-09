@@ -328,6 +328,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ff8f24b5b8c841fba5d56d300370350c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  icon: {fileID: 661943711}
-  countText: {fileID: 250235859}
-  stateText: {fileID: 1320590782}
+  _icon: {fileID: 661943711}
+  _countText: {fileID: 250235859}
+  _stateText: {fileID: 1320590782}

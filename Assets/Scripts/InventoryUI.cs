@@ -4,9 +4,8 @@ using UnityEngine.UI;
 
 public class InventoryUI : MonoBehaviour
 {
-    [SerializeField] private GameObject slotPrefab;
-    [SerializeField] private Transform slotsContainer;
-    [SerializeField] private ScrollRect scrollRect;
+    [SerializeField] private GameObject _slotPrefab;
+    [SerializeField] private Transform _slotsContainer;
 
     private List<InventorySlot> slots = new List<InventorySlot>();
     private List<InventorySlot> inactiveSlots = new List<InventorySlot>();
@@ -53,7 +52,7 @@ public class InventoryUI : MonoBehaviour
             return slot;
         }
 
-        GameObject slotObj = Instantiate(slotPrefab, slotsContainer);
+        GameObject slotObj = Instantiate(_slotPrefab, _slotsContainer);
         return slotObj.GetComponent<InventorySlot>();
     }
 }
