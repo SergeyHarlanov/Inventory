@@ -10,7 +10,6 @@ public class InventoryManager : MonoBehaviour
     [SerializeField] private Item[] _availableItems;
 
     private const int DefaultMaxSlots = 20;
-
     private InventorySaver _saver;
 
     private void Awake()
@@ -39,11 +38,10 @@ public class InventoryManager : MonoBehaviour
             count -= amountToAdd;
         }
 
-        ConsolidateSlots(item, state);
         UpdateAndSave();
     }
 
-    public void RemoveItem(Item item, AnimalState state)
+    public void RemoveItem(Item item, AnimalState state, bool autoConsolidate = false)
     {
         InventoryItem existingItem = FindItem(item, state);
         
@@ -54,7 +52,7 @@ public class InventoryManager : MonoBehaviour
             {
                 _items.Remove(existingItem);
             }
-            ConsolidateSlots(item, state);
+            
             UpdateAndSave();
         }
     }
@@ -70,16 +68,13 @@ public class InventoryManager : MonoBehaviour
             if (existingItem.count > 1)
             {
                 existingItem.count--;
-                AddItem(item, 1, newState);
+                _items.Add(new InventoryItem(item, 1, newState));
             }
             else
             {
-                _items.Remove(existingItem);
-                AddItem(item, 1, newState);
+                existingItem.state = newState;
             }
             
-            ConsolidateSlots(item, currentState);
-            ConsolidateSlots(item, newState);
             UpdateAndSave();
         }
     }
@@ -122,59 +117,36 @@ public class InventoryManager : MonoBehaviour
         if (_items.Count > 0)
         {
             int index = Random.Range(0, _items.Count);
-            RemoveItem(_items[index].itemData, _items[index].state);
-            UpdateAndSave();
+            RemoveItem(_items[index].itemData, _items[index].state, autoConsolidate: false);
         }
     }
     
     public void ChangeStateRandomItem()
     {
-        List<InventoryItem> itemsAnimals = _items.FindAll(x => x.itemData.type == ItemType.Animal); 
-        if (itemsAnimals.Count > 0)
-        {
-            int index = Random.Range(0, itemsAnimals.Count);
-            ToggleAnimalState(itemsAnimals[index].itemData, itemsAnimals[index].state);
-        }
+        List<InventoryItem> animalItems = _items.FindAll(x => x.itemData.type == ItemType.Animal); 
+        if (animalItems.Count == 0) return;
+
+        int randomIndex = Random.Range(0, animalItems.Count);
+        InventoryItem selectedItem = animalItems[randomIndex];
+        AnimalState newState = selectedItem.state == AnimalState.Healthy ? AnimalState.Wounded : AnimalState.Healthy;
+        
+        RemoveItem(selectedItem.itemData, selectedItem.state);
+        AddItem(selectedItem.itemData, 1, newState);
+        
+        UpdateAndSave();
     }
 
     private InventoryItem FindMatchingItem(Item item, AnimalState state)
     {
         return _items.Find(i => i.itemData == item && 
-                                (i.itemData.type != ItemType.Animal || i.state == state) && 
-                                i.count < i.itemData.stackLimit);
+                              (i.itemData.type != ItemType.Animal || i.state == state) && 
+                              i.count < i.itemData.stackLimit);
     }
 
     private InventoryItem FindItem(Item item, AnimalState state)
     {
         return _items.Find(i => i.itemData == item && 
-                                (i.itemData.type != ItemType.Animal || i.state == state));
-    }
-
-    private void ConsolidateSlots(Item item, AnimalState state)
-    {
-        List<InventoryItem> matchingSlots = _items.FindAll(i => i.itemData == item && 
-                                                              (i.itemData.type != ItemType.Animal || i.state == state));
-        
-        if (matchingSlots.Count > 1)
-        {
-            InventoryItem primarySlot = matchingSlots[0];
-            int totalCount = primarySlot.count;
-            for (int i = 1; i < matchingSlots.Count; i++)
-            {
-                totalCount += matchingSlots[i].count;
-                _items.Remove(matchingSlots[i]);
-            }
-
-            primarySlot.count = Mathf.Min(totalCount, item.stackLimit);
-            totalCount -= primarySlot.count;
-
-            while (totalCount > 0 && _items.Count < _maxSlots)
-            {
-                int amountToAdd = Mathf.Min(totalCount, item.stackLimit);
-                _items.Add(new InventoryItem(item, amountToAdd, state));
-                totalCount -= amountToAdd;
-            }
-        }
+                              (i.itemData.type != ItemType.Animal || i.state == state));
     }
 
     private bool CanStackItems(InventoryItem draggedItem, InventoryItem targetItem)
@@ -202,9 +174,7 @@ public class InventoryManager : MonoBehaviour
 
     private void SwapItemsDirectly(int draggedIndex, int targetIndex)
     {
-        InventoryItem temp = _items[draggedIndex];
-        _items[draggedIndex] = _items[targetIndex];
-        _items[targetIndex] = temp;
+        (_items[draggedIndex], _items[targetIndex]) = (_items[targetIndex], _items[draggedIndex]);
     }
 
     private void UpdateAndSave()
