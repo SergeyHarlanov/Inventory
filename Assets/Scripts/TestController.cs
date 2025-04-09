@@ -10,9 +10,12 @@ public class TestController : MonoBehaviour
 
     private void Start()
     {
-        for (int i = 0; i < _testItems.Length; i++)
+        if (!PlayerPrefs.HasKey("Inventory"))
         {
-              AddTestItem(i);
+            for (int i = 0; i < _testItems.Length; i++)
+            {
+                AddTestItem(i);
+            }
         }
     }
 

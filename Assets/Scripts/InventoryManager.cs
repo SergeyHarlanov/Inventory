@@ -6,8 +6,12 @@ public class InventoryManager : MonoBehaviour
 {
     [SerializeField] private int _maxSlots = 20;
     [SerializeField] private InventoryUI _inventoryUI;
-    
     [SerializeField] private List<InventoryItem> _items = new List<InventoryItem>();
+
+    private void Awake()
+    {
+        LoadInventory();
+    }
 
     public void AddItem(Item item, int count = 1, AnimalState state = AnimalState.Healthy)
     {
@@ -32,6 +36,7 @@ public class InventoryManager : MonoBehaviour
 
         ConsolidateSlots(item, state);
         _inventoryUI.UpdateUI(_items);
+        SaveInventory();
     }
 
     public void RemoveItem(Item item, AnimalState state)
@@ -48,6 +53,7 @@ public class InventoryManager : MonoBehaviour
             }
             ConsolidateSlots(item, state);
         }
+        SaveInventory();
     }
 
     public void ToggleAnimalState(Item item, AnimalState currentState)
@@ -72,6 +78,7 @@ public class InventoryManager : MonoBehaviour
             ConsolidateSlots(item, currentState);
             ConsolidateSlots(item, newState);
             _inventoryUI.UpdateUI(_items);
+            SaveInventory();
         }
     }
 
@@ -112,6 +119,7 @@ public class InventoryManager : MonoBehaviour
             }
             
             _inventoryUI.UpdateUI(_items);
+            SaveInventory();
         }
     }
 
@@ -158,6 +166,7 @@ public class InventoryManager : MonoBehaviour
             int index = Random.Range(0, _items.Count);
             RemoveItem(_items[index].itemData, _items[index].state);
             _inventoryUI.UpdateUI(_items);
+            SaveInventory();
         }
     }
     
@@ -176,5 +185,49 @@ public class InventoryManager : MonoBehaviour
         return _items.Find(i => i.itemData == item && 
                                 (i.itemData.type != ItemType.Animal || i.state == state) && 
                                 i.count < i.itemData.stackLimit);
+    }
+
+    private void SaveInventory()
+    {
+        string saveData = "";
+        foreach (var item in _items)
+        {
+            saveData += $"{item.itemData.id},{item.count},{(int)item.state};";
+        }
+        PlayerPrefs.SetString("Inventory", saveData);
+        PlayerPrefs.Save();
+    }
+
+    private void LoadInventory()
+    {
+        if (PlayerPrefs.HasKey("Inventory"))
+        {
+            string saveData = PlayerPrefs.GetString("Inventory");
+            if (!string.IsNullOrEmpty(saveData))
+            {
+                _items.Clear();
+                string[] itemData = saveData.Split(';');
+                foreach (var data in itemData)
+                {
+                    if (string.IsNullOrEmpty(data)) continue;
+                    string[] parts = data.Split(',');
+                    int id = int.Parse(parts[0]);
+                    int count = int.Parse(parts[1]);
+                    AnimalState state = (AnimalState)int.Parse(parts[2]);
+
+                    Item item = FindItemById(id); // Предполагается, что у вас есть способ найти Item по ID
+                    if (item != null)
+                    {
+                        _items.Add(new InventoryItem(item, count, state));
+                    }
+                }
+                _inventoryUI.UpdateUI(_items);
+            }
+        }
+    }
+
+    private Item FindItemById(int id)
+    {
+        return Resources.FindObjectsOfTypeAll<Item>().FirstOrDefault(i => i.id == id);
     }
 }
