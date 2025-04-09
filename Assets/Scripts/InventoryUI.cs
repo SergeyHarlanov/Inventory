@@ -7,49 +7,49 @@ public class InventoryUI : MonoBehaviour
     [SerializeField] private GameObject _slotPrefab;
     [SerializeField] private Transform _slotsContainer;
 
-    private List<InventorySlot> slots = new List<InventorySlot>();
-    private List<InventorySlot> inactiveSlots = new List<InventorySlot>();
+    private List<InventorySlot> _slots = new List<InventorySlot>();
+    private List<InventorySlot> _inactiveSlots = new List<InventorySlot>();
 
     public void UpdateUI(List<InventoryItem> items)
     {
         for (int i = 0; i < items.Count; i++)
         {
             InventorySlot slot;
-            if (i < slots.Count)
+            if (i < _slots.Count)
             {
-                slot = slots[i];
+                slot = _slots[i];
                 if (!slot.gameObject.activeSelf)
                     slot.gameObject.SetActive(true);
             }
             else
             {
                 slot = GetOrCreateSlot();
-                slots.Add(slot);
+                _slots.Add(slot);
             }
             
-            slot.Setup(items[i]); // Вызываем Setup с анимацией
+            slot.Setup(items[i]);
         }
 
-        for (int i = items.Count; i < slots.Count; i++)
+        for (int i = items.Count; i < _slots.Count; i++)
         {
-            slots[i].gameObject.SetActive(false);
-            inactiveSlots.Add(slots[i]);
+            _slots[i].gameObject.SetActive(false);
+            _inactiveSlots.Add(_slots[i]);
         }
 
-        if (items.Count < slots.Count)
+        if (items.Count < _slots.Count)
         {
-            slots.RemoveRange(items.Count, slots.Count - items.Count);
+            _slots.RemoveRange(items.Count, _slots.Count - items.Count);
         }
     }
 
     private InventorySlot GetOrCreateSlot()
     {
-        if (inactiveSlots.Count > 0)
+        if (_inactiveSlots.Count > 0)
         {
-            InventorySlot slot = inactiveSlots[inactiveSlots.Count - 1];
+            InventorySlot slot = _inactiveSlots[_inactiveSlots.Count - 1];
             slot.ResetData();
             
-            inactiveSlots.RemoveAt(inactiveSlots.Count - 1);
+            _inactiveSlots.RemoveAt(_inactiveSlots.Count - 1);
             slot.gameObject.SetActive(true);
             return slot;
         }

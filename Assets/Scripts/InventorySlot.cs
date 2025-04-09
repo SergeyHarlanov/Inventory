@@ -1,22 +1,38 @@
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.EventSystems;
 using DG.Tweening;
 
-public class InventorySlot : MonoBehaviour
+public class InventorySlot : MonoBehaviour, IPointerDownHandler, IBeginDragHandler, IDragHandler, IEndDragHandler, IDropHandler
 {
     [SerializeField] private Image _icon;
     [SerializeField] private Text _countText;
     [SerializeField] private Text _stateText;
 
     private int _previousCount = 0;
+    private InventoryItem _item;
+    private CanvasGroup _canvasGroup;
+    private RectTransform _rectTransform;
+    private GameObject _dragInstance;
+
+    private void Awake()
+    {
+        _canvasGroup = GetComponent<CanvasGroup>();
+        if (_canvasGroup == null)
+            _canvasGroup = gameObject.AddComponent<CanvasGroup>();
+        
+        _rectTransform = GetComponent<RectTransform>();
+    }
 
     public void ResetData()
     {
         _previousCount = 0;
+        _item = null;
     }
 
     public void Setup(InventoryItem item)
     {
+        _item = item;
         int newCount = item.count;
 
         _icon.sprite = item.itemData.icon;
@@ -49,5 +65,50 @@ public class InventorySlot : MonoBehaviour
         }
 
         _previousCount = newCount;
+    }
+
+    public void OnPointerDown(PointerEventData eventData)
+    {
+    }
+
+    public void OnBeginDrag(PointerEventData eventData)
+    {
+        if (_item == null) return;
+
+        _canvasGroup.alpha = 0.6f;
+        _canvasGroup.blocksRaycasts = false;
+
+        _dragInstance = Instantiate(gameObject, transform.parent.parent);
+        _dragInstance.GetComponent<CanvasGroup>().blocksRaycasts = false;
+        _dragInstance.transform.position = transform.position;
+    }
+
+    public void OnDrag(PointerEventData eventData)
+    {
+        if (_dragInstance != null)
+        {
+            _dragInstance.transform.position = eventData.position;
+        }
+    }
+
+    public void OnEndDrag(PointerEventData eventData)
+    {
+        if (_dragInstance != null)
+        {
+            Destroy(_dragInstance);
+        }
+
+        _canvasGroup.alpha = 1f;
+        _canvasGroup.blocksRaycasts = true;
+    }
+
+    public void OnDrop(PointerEventData eventData)
+    {
+        InventorySlot draggedSlot = eventData.pointerDrag.GetComponent<InventorySlot>();
+        if (draggedSlot != null && draggedSlot != this && draggedSlot._item != null)
+        {
+            InventoryManager manager = FindObjectOfType<InventoryManager>();
+            manager.SwapItems(draggedSlot._item, _item, draggedSlot);
+        }
     }
 }

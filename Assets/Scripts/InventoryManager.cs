@@ -30,7 +30,7 @@ public class InventoryManager : MonoBehaviour
             count -= amountToAdd;
         }
 
-        ConsolidateSlots(item, state); // Объединяем слоты после добавления
+        ConsolidateSlots(item, state);
         _inventoryUI.UpdateUI(_items);
     }
 
@@ -46,7 +46,7 @@ public class InventoryManager : MonoBehaviour
             {
                 _items.Remove(existingItem);
             }
-            ConsolidateSlots(item, state); // Объединяем слоты после удаления
+            ConsolidateSlots(item, state);
         }
     }
 
@@ -69,21 +69,59 @@ public class InventoryManager : MonoBehaviour
                 AddItem(item, 1, newState);
             }
             
-            ConsolidateSlots(item, currentState); // Объединяем слоты для текущего состояния
-            ConsolidateSlots(item, newState);     // Объединяем слоты для нового состояния
+            ConsolidateSlots(item, currentState);
+            ConsolidateSlots(item, newState);
+            _inventoryUI.UpdateUI(_items);
+        }
+    }
+
+    public void SwapItems(InventoryItem draggedItem, InventoryItem targetItem, InventorySlot draggedSlot)
+    {
+        int draggedIndex = _items.IndexOf(draggedItem);
+        if (targetItem == null)
+        {
+            _inventoryUI.UpdateUI(_items);
+            return;
+        }
+
+        int targetIndex = _items.IndexOf(targetItem);
+
+        if (draggedIndex != -1 && targetIndex != -1)
+        {
+            if (draggedItem.itemData == targetItem.itemData && 
+                (draggedItem.itemData.type != ItemType.Animal || draggedItem.state == targetItem.state))
+            {
+                int totalCount = draggedItem.count + targetItem.count;
+                if (totalCount <= draggedItem.itemData.stackLimit)
+                {
+                    targetItem.count = totalCount;
+                    _items.Remove(draggedItem);
+                }
+                else
+                {
+                    targetItem.count = draggedItem.itemData.stackLimit;
+                    draggedItem.count = totalCount - draggedItem.itemData.stackLimit;
+                    _items[draggedIndex] = draggedItem;
+                    _items[targetIndex] = targetItem;
+                }
+            }
+            else
+            {
+                _items[draggedIndex] = targetItem;
+                _items[targetIndex] = draggedItem;
+            }
+            
             _inventoryUI.UpdateUI(_items);
         }
     }
 
     private void ConsolidateSlots(Item item, AnimalState state)
     {
-        // Находим все слоты с таким же item и state
         List<InventoryItem> matchingSlots = _items.FindAll(i => i.itemData == item && 
                                                               (i.itemData.type != ItemType.Animal || i.state == state));
         
         if (matchingSlots.Count > 1)
         {
-            // Суммируем все предметы в первый слот
             InventoryItem primarySlot = matchingSlots[0];
             int totalCount = primarySlot.count;
             for (int i = 1; i < matchingSlots.Count; i++)
@@ -92,7 +130,6 @@ public class InventoryManager : MonoBehaviour
                 _items.Remove(matchingSlots[i]);
             }
 
-            // Распределяем общее количество по слотам с учетом stackLimit
             primarySlot.count = Mathf.Min(totalCount, item.stackLimit);
             totalCount -= primarySlot.count;
 
