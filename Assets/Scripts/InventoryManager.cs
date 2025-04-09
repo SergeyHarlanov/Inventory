@@ -4,20 +4,25 @@ using UnityEngine;
 
 public class InventoryManager : MonoBehaviour
 {
-    [SerializeField] private int _maxSlots = 20;
+    [SerializeField] private int _maxSlots = DefaultMaxSlots;
     [SerializeField] private InventoryUI _inventoryUI;
     [SerializeField] private List<InventoryItem> _items = new List<InventoryItem>();
+    [SerializeField] private Item[] _availableItems;
+
+    private const int DefaultMaxSlots = 20;
+
+    private InventorySaver _saver;
 
     private void Awake()
     {
-        LoadInventory();
+        _saver = new InventorySaver();
+        _saver.LoadInventory(_items, _availableItems);
+        _inventoryUI.UpdateUI(_items);
     }
 
     public void AddItem(Item item, int count = 1, AnimalState state = AnimalState.Healthy)
     {
-        InventoryItem existingItem = _items.Find(i => i.itemData == item && 
-                                                    (i.itemData.type != ItemType.Animal || i.state == state) && 
-                                                    i.count < i.itemData.stackLimit);
+        InventoryItem existingItem = FindMatchingItem(item, state);
         
         if (existingItem != null)
         {
@@ -35,14 +40,12 @@ public class InventoryManager : MonoBehaviour
         }
 
         ConsolidateSlots(item, state);
-        _inventoryUI.UpdateUI(_items);
-        SaveInventory();
+        UpdateAndSave();
     }
 
     public void RemoveItem(Item item, AnimalState state)
     {
-        InventoryItem existingItem = _items.Find(i => i.itemData == item && 
-                                                    (i.itemData.type != ItemType.Animal || i.state == state));
+        InventoryItem existingItem = FindItem(item, state);
         
         if (existingItem != null)
         {
@@ -52,13 +55,13 @@ public class InventoryManager : MonoBehaviour
                 _items.Remove(existingItem);
             }
             ConsolidateSlots(item, state);
+            UpdateAndSave();
         }
-        SaveInventory();
     }
 
     public void ToggleAnimalState(Item item, AnimalState currentState)
     {
-        InventoryItem existingItem = _items.Find(i => i.itemData == item && i.state == currentState);
+        InventoryItem existingItem = FindItem(item, currentState);
         
         if (existingItem != null && existingItem.itemData.type == ItemType.Animal)
         {
@@ -77,8 +80,7 @@ public class InventoryManager : MonoBehaviour
             
             ConsolidateSlots(item, currentState);
             ConsolidateSlots(item, newState);
-            _inventoryUI.UpdateUI(_items);
-            SaveInventory();
+            UpdateAndSave();
         }
     }
 
@@ -87,40 +89,65 @@ public class InventoryManager : MonoBehaviour
         int draggedIndex = _items.IndexOf(draggedItem);
         if (targetItem == null)
         {
-            _inventoryUI.UpdateUI(_items);
+            UpdateAndSave();
             return;
         }
 
         int targetIndex = _items.IndexOf(targetItem);
+        if (draggedIndex == -1 || targetIndex == -1) return;
 
-        if (draggedIndex != -1 && targetIndex != -1)
+        if (CanStackItems(draggedItem, targetItem))
         {
-            if (draggedItem.itemData == targetItem.itemData && 
-                (draggedItem.itemData.type != ItemType.Animal || draggedItem.state == targetItem.state))
-            {
-                int totalCount = draggedItem.count + targetItem.count;
-                if (totalCount <= draggedItem.itemData.stackLimit)
-                {
-                    targetItem.count = totalCount;
-                    _items.Remove(draggedItem);
-                }
-                else
-                {
-                    targetItem.count = draggedItem.itemData.stackLimit;
-                    draggedItem.count = totalCount - draggedItem.itemData.stackLimit;
-                    _items[draggedIndex] = draggedItem;
-                    _items[targetIndex] = targetItem;
-                }
-            }
-            else
-            {
-                _items[draggedIndex] = targetItem;
-                _items[targetIndex] = draggedItem;
-            }
-            
-            _inventoryUI.UpdateUI(_items);
-            SaveInventory();
+            StackItems(draggedItem, targetItem, draggedIndex, targetIndex);
         }
+        else
+        {
+            SwapItemsDirectly(draggedIndex, targetIndex);
+        }
+        
+        UpdateAndSave();
+    }
+
+    public void AddRandomItem()
+    {
+        if (_items.Count > 0)
+        {
+            int index = Random.Range(0, _items.Count);
+            AddItem(_items[index].itemData, 1, _items[index].state);
+        }
+    }
+    
+    public void RemoveRandomItem()
+    {
+        if (_items.Count > 0)
+        {
+            int index = Random.Range(0, _items.Count);
+            RemoveItem(_items[index].itemData, _items[index].state);
+            UpdateAndSave();
+        }
+    }
+    
+    public void ChangeStateRandomItem()
+    {
+        List<InventoryItem> itemsAnimals = _items.FindAll(x => x.itemData.type == ItemType.Animal); 
+        if (itemsAnimals.Count > 0)
+        {
+            int index = Random.Range(0, itemsAnimals.Count);
+            ToggleAnimalState(itemsAnimals[index].itemData, itemsAnimals[index].state);
+        }
+    }
+
+    private InventoryItem FindMatchingItem(Item item, AnimalState state)
+    {
+        return _items.Find(i => i.itemData == item && 
+                                (i.itemData.type != ItemType.Animal || i.state == state) && 
+                                i.count < i.itemData.stackLimit);
+    }
+
+    private InventoryItem FindItem(Item item, AnimalState state)
+    {
+        return _items.Find(i => i.itemData == item && 
+                                (i.itemData.type != ItemType.Animal || i.state == state));
     }
 
     private void ConsolidateSlots(Item item, AnimalState state)
@@ -150,84 +177,39 @@ public class InventoryManager : MonoBehaviour
         }
     }
 
-    public void AddRandomItem()
+    private bool CanStackItems(InventoryItem draggedItem, InventoryItem targetItem)
     {
-        if (_items.Count > 0)
-        {
-            int index = Random.Range(0, _items.Count);
-            AddItem(_items[index].itemData, 1, _items[index].state);
-        }
+        return draggedItem.itemData == targetItem.itemData && 
+               (draggedItem.itemData.type != ItemType.Animal || draggedItem.state == targetItem.state);
     }
-    
-    public void RemoveRandomItem()
+
+    private void StackItems(InventoryItem draggedItem, InventoryItem targetItem, int draggedIndex, int targetIndex)
     {
-        if (_items.Count > 0)
+        int totalCount = draggedItem.count + targetItem.count;
+        if (totalCount <= draggedItem.itemData.stackLimit)
         {
-            int index = Random.Range(0, _items.Count);
-            RemoveItem(_items[index].itemData, _items[index].state);
-            _inventoryUI.UpdateUI(_items);
-            SaveInventory();
+            targetItem.count = totalCount;
+            _items.Remove(draggedItem);
         }
-    }
-    
-    public void ChangeStateRandomItem()
-    {
-        List<InventoryItem> itemsAnimals = _items.FindAll(x => x.itemData.type == ItemType.Animal); 
-        if (itemsAnimals.Count > 0)
+        else
         {
-            int index = Random.Range(0, itemsAnimals.Count);
-            ToggleAnimalState(itemsAnimals[index].itemData, itemsAnimals[index].state);
+            targetItem.count = draggedItem.itemData.stackLimit;
+            draggedItem.count = totalCount - draggedItem.itemData.stackLimit;
+            _items[draggedIndex] = draggedItem;
+            _items[targetIndex] = targetItem;
         }
     }
 
-    private InventoryItem FindMatchingItem(Item item, AnimalState state)
+    private void SwapItemsDirectly(int draggedIndex, int targetIndex)
     {
-        return _items.Find(i => i.itemData == item && 
-                                (i.itemData.type != ItemType.Animal || i.state == state) && 
-                                i.count < i.itemData.stackLimit);
+        InventoryItem temp = _items[draggedIndex];
+        _items[draggedIndex] = _items[targetIndex];
+        _items[targetIndex] = temp;
     }
 
-    private void SaveInventory()
+    private void UpdateAndSave()
     {
-        string saveData = "";
-        foreach (var item in _items)
-        {
-            saveData += $"{item.itemData.id},{item.count},{(int)item.state};";
-        }
-        PlayerPrefs.SetString("Inventory", saveData);
-        PlayerPrefs.Save();
-    }
-
-    private void LoadInventory()
-    {
-        if (PlayerPrefs.HasKey("Inventory"))
-        {
-            string saveData = PlayerPrefs.GetString("Inventory");
-            if (!string.IsNullOrEmpty(saveData))
-            {
-                _items.Clear();
-                string[] itemData = saveData.Split(';');
-                foreach (var data in itemData)
-                {
-                    if (string.IsNullOrEmpty(data)) continue;
-                    string[] parts = data.Split(',');
-                    int id = int.Parse(parts[0]);
-                    int count = int.Parse(parts[1]);
-                    AnimalState state = (AnimalState)int.Parse(parts[2]);
-
-                    Item item = FindItemById(id); // Предполагается, что у вас есть способ найти Item по ID
-                    if (item != null)
-                    {
-                        _items.Add(new InventoryItem(item, count, state));
-                    }
-                }
-                _inventoryUI.UpdateUI(_items);
-            }
-        }
-    }
-
-    private Item FindItemById(int id)
-    {
-        return Resources.FindObjectsOfTypeAll<Item>().FirstOrDefault(i => i.id == id);
+        _inventoryUI.UpdateUI(_items);
+        _saver.SaveInventory(_items);
     }
 }
