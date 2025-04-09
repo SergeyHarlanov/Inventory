@@ -12,7 +12,6 @@ public class InventorySlot : MonoBehaviour, IPointerDownHandler, IBeginDragHandl
     private int _previousCount = 0;
     private InventoryItem _item;
     private CanvasGroup _canvasGroup;
-    private RectTransform _rectTransform;
     private GameObject _dragInstance;
 
     private void Awake()
@@ -20,8 +19,6 @@ public class InventorySlot : MonoBehaviour, IPointerDownHandler, IBeginDragHandl
         _canvasGroup = GetComponent<CanvasGroup>();
         if (_canvasGroup == null)
             _canvasGroup = gameObject.AddComponent<CanvasGroup>();
-        
-        _rectTransform = GetComponent<RectTransform>();
     }
 
     public void ResetData()

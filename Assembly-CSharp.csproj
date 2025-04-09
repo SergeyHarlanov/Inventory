@@ -41,15 +41,15 @@
     <ImplicitlyExpandDesignTimeFacades>false</ImplicitlyExpandDesignTimeFacades>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="Assets\Scripts\TestController.cs" />
-    <Compile Include="Assets\Scripts\InventorySlot.cs" />
-    <Compile Include="Assets\Scripts\ItemType.cs" />
-    <Compile Include="Assets\Scripts\Item.cs" />
-    <Compile Include="Assets\Scripts\InventoryManager.cs" />
-    <Compile Include="Assets\Scripts\InventoryItem.cs" />
-    <Compile Include="Assets\Scripts\AnimalState.cs" />
-    <Compile Include="Assets\Scripts\InventoryUI.cs" />
-    <Compile Include="Assets\Scripts\InventorySaver.cs" />
+    <Compile Include="Assets\Scripts\Inventory\Testing\TestController.cs" />
+    <Compile Include="Assets\Scripts\Inventory\InventorySlot.cs" />
+    <Compile Include="Assets\Scripts\Inventory\Enums\ItemType.cs" />
+    <Compile Include="Assets\Scripts\Inventory\Data\Item.cs" />
+    <Compile Include="Assets\Scripts\Inventory\InventoryManager.cs" />
+    <Compile Include="Assets\Scripts\Inventory\Data\InventoryItem.cs" />
+    <Compile Include="Assets\Scripts\Inventory\Enums\AnimalState.cs" />
+    <Compile Include="Assets\Scripts\Inventory\InventoryUI.cs" />
+    <Compile Include="Assets\Scripts\Inventory\Core\InventorySaver.cs" />
     <None Include="Assets\TextMesh Pro\Shaders\TMPro.cginc" />
     <None Include="Assets\TextMesh Pro\Shaders\TMP_SDF-Mobile Overlay.shader" />
     <None Include="Assets\TextMesh Pro\Shaders\TMP_Bitmap.shader" />
